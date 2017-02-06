@@ -70,8 +70,27 @@ function Remove-AvigilonStartupItem {
 }
 
 function Install-AvigilonSoftware {
+    <#
+    .SYNOPSIS
+        Runs the Avigilon Control Center Server installer.
+
+    .DESCRIPTION
+        Installs Avigilon Control Center Server and Client based on user input.
+
+    .EXAMPLE
+        Called from Run-Main function. Can be run as standalone with 
+        Install-AvigilonSoftware
+        Install-AvigilonSoftware -District "SchoolDistrictName"
+
+    .LINK
+        "Press any key to continue..." snippet taken from:
+        https://technet.microsoft.com/en-us/library/ff730938.aspx
+    #>
     [CmdletBinding()]
     param(
+        [Parameter(Mandatory = $false,
+                   ValueFromPipelineByPropertyName = $true)]
+        [string]$District = "NotListed"
     )
     
     begin {
@@ -84,7 +103,16 @@ function Install-AvigilonSoftware {
     }
 
     process {
-        #TODO: run installer based on selection/input
+
+        if ($District -eq "NotListed") {
+            #Run the default installer if District not passed/NotListed selected
+            #Relies on default installer folder with name '[Default] X.X.X.X'
+            $AvigilonInstallerPath = $AvigilonSoftwarePath | Sort-Object | Select-Object -First 1
+            $ACCSInstaller = Get-ChildItem $AvigilonInstallerPath | Where-Object { $_.Name -like "*Server*" }
+            & ($ACCSInstaller) | Out-Null
+        } else {
+            #TODO: District based selection
+        }
     }
 
     end {
@@ -173,7 +201,7 @@ function Run-WindowsUpdate {
 
     end {
         #Cleanup temporary directory and files.
-        rmdir /S "C:\tmp"
+        Remove-Item -Recurse "C:\tmp"
     }
 }
 
@@ -183,13 +211,34 @@ function Run-Main {
     )
 
     begin {
-        $MenuOptions = @("Select school district",
-                         "Install CentraStage",
-                         "Install Avigilon Control Center client",
-                         "Rename network adapters",
-                         "Set camera adapter network configuration",
-                         "Configure & run Windows Update",
-                         "EXIT")
+        $MenuOptions = @("1. Select school district",
+                         "2. Install CentraStage",
+                         "3. Install Avigilon Control Center client",
+                         "4. Rename network adapters",
+                         "5. Set camera adapter network configuration",#TODO
+                         "6. Configure & run Windows Update",
+                         "Q. QUIT")
+
+        $District = "NotListed"
+    }
+
+    process {
+        do {
+            Clear-Host
+            $MenuOptions
+            $MenuSelection = Read-Host "Make a selection"
+            switch ($MenuSelection) {
+                '1' { $District = Get-District }
+                '2' { Install-CentraStage }
+                '3' { Install-AvigilonSoftware -District $District }
+                '4' { Rename-NetworkAdapters }
+                #'5' { TODO: Configure network }
+                '6' { Run-WindowsUpdate }
+                'Q' { return }
+                default { "Invalid selection" }
+            }
+            pause
+        } until ($MenuSelection -eq 'Q')
     }
 }
 
