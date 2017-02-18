@@ -16,11 +16,8 @@ function Install-CentraStage {
 
     .EXAMPLE
         Called from Run-Main function. Can be run as standalone with Install-CentraStage.
-
-    .LINK
-        "Press any key to continue..." snippet taken from:
-        https://technet.microsoft.com/en-us/library/ff730938.aspx
     #>
+
     [CmdletBinding()]
     param(
     )
@@ -45,8 +42,7 @@ function Install-CentraStage {
     end {
         Write-Host "Done! Appliance added under TEMP site - login to CentraStage and move appliance to specific site"
         
-        Write-Host "Press any key to continue..."
-        $x = $Host.UI.RawUI.ReadKey("NoEcho, IncludeKeyDown")
+        pause
     }
 }
 
@@ -57,6 +53,7 @@ function Remove-AvigilonStartupItem {
 
     begin {
         try {
+            #Need to edit now that Avigilon Control Center 6 has been released
             Test-Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\Avigilon Control Center 5 Client.lnk" -ErrorAction Stop
             $AvigilonStartupItem = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\Avigilon Control Center 5 Client.lnk"
         } catch {
@@ -66,6 +63,10 @@ function Remove-AvigilonStartupItem {
 
     process {
         Remove-Item $AvigilonStartupItem
+    }
+
+    end {
+        pause
     }
 }
 
@@ -81,11 +82,8 @@ function Install-AvigilonSoftware {
         Called from Run-Main function. Can be run as standalone with 
         Install-AvigilonSoftware
         Install-AvigilonSoftware -District "SchoolDistrictName"
-
-    .LINK
-        "Press any key to continue..." snippet taken from:
-        https://technet.microsoft.com/en-us/library/ff730938.aspx
     #>
+
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false,
@@ -103,7 +101,6 @@ function Install-AvigilonSoftware {
     }
 
     process {
-
         if ($District -eq "NotListed") {
             #Run the default installer if District not passed/NotListed selected
             #Relies on default installer folder with name '[Default] X.X.X.X'
@@ -139,6 +136,8 @@ function Rename-NetworkAdapters {
     end {
         $IntelCameraAdapter.Put() | Out-Null
         $RealtekLANAdapter.Put() | Out-Null
+
+        pause
     }
 }
 
@@ -149,6 +148,10 @@ function Disable-Firewall {
 
     process {
         netsh advfirewall set allprofiles state off
+    }
+
+    end {
+        pause
     }
 }
 
@@ -174,6 +177,8 @@ function Disable-WindowsUpdate {
 
     end {
         $WUSettings.Save()
+
+        pause
     }
 }
 
@@ -202,6 +207,8 @@ function Run-WindowsUpdate {
     end {
         #Cleanup temporary directory and files.
         Remove-Item -Recurse "C:\tmp"
+
+        pause
     }
 }
 
@@ -216,7 +223,8 @@ function Run-Main {
                          "3. Install Avigilon Control Center client",
                          "4. Rename network adapters",
                          "5. Set camera adapter network configuration",#TODO
-                         "6. Configure & run Windows Update",
+                         "6. Disable automatic Windows updates",
+                         "7. Run Windows Update",
                          "Q. QUIT")
 
         $District = "NotListed"
@@ -233,7 +241,8 @@ function Run-Main {
                 '3' { Install-AvigilonSoftware -District $District }
                 '4' { Rename-NetworkAdapters }
                 #'5' { TODO: Configure network }
-                '6' { Run-WindowsUpdate }
+                '6' { Disable-WindowsUpdate }
+                '7' { Run-WindowsUpdate }
                 'Q' { return }
                 default { "Invalid selection" }
             }
