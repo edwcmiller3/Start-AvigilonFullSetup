@@ -47,6 +47,20 @@ function Install-CentraStage {
 }
 
 function Remove-AvigilonStartupItem {
+    <#
+    .SYNOPSIS
+        Remove Avigilon Control Center Client from startup.
+
+    .DESCRIPTION
+        Checks to see if the Avigilon Control Center Client is in the Windows startup programs.
+        If found, removes the application from startup.
+
+    .EXAMPLE
+        Called from the end{} of Install-AvigilonSoftware function. Can be run as standalone with Remove-AvigilonStartupItem.
+
+    .NOTES
+        Currently only works for the ACC 5 client. Can be modified to work for recently released ACC 6.
+    #>
     [CmdletBinding()]
     param(
     )
@@ -142,6 +156,16 @@ function Rename-NetworkAdapters {
 }
 
 function Disable-Firewall {
+    <#
+    .SYNOPSIS
+        Disables Windows Firewall.
+
+    .DESCRIPTION
+        Sets all Windows Firewall profiles to off.
+
+    .EXAMPLE
+        Called from Run-Main function. Can be run as standalone with Disable-Firewall.
+    #>
     [CmdletBinding()]
     param(
     )
@@ -156,6 +180,20 @@ function Disable-Firewall {
 }
 
 function Disable-WindowsUpdate {
+    <#
+    .SYNOPSIS
+        Turns off automatic updating.
+
+    .DESCRIPTION
+        Sets the Windows Update scheduling and notification to disabled.
+        Avoids appliance auto restarting to install updates which may interrupt camera recording.
+
+    .EXAMPLE
+        Called from Run-Main function. Can be run as standalone with Disable-WindowsUpdate.
+
+    .NOTES
+        Recommend manually updating the appliance or schedule updates for planned downtime.
+    #>
     [CmdletBinding()]
     param(
     )
@@ -183,6 +221,17 @@ function Disable-WindowsUpdate {
 }
 
 function Run-WindowsUpdate {
+    <#
+    .SYNOPSIS
+        Configures and runs Windows Update.
+
+    .DESCRIPTION
+        Downloads and runs the update for Windows Update for Windows 7 systems, then starts checking for updates.
+        Update for Windows Update can fail if the Windows Update service has not been restarted before running.
+
+    .EXAMPLE
+        Called from Run-Main function. Can be run as standalone with Run-WindowsUpdate.
+    #>
     [CmdletBinding()]
     param(
     )
@@ -213,6 +262,13 @@ function Run-WindowsUpdate {
 }
 
 function Run-Main {
+    <#
+    .SYNOPSIS
+        Main loop function for Start-AvigilonFullSetup script.
+
+    .DESCRIPTION
+        Clears the screen, displays menu for available configuration options, and accepts user input to run respective functions.
+    #>
     [CmdletBinding()]
     param(
     )
@@ -232,8 +288,9 @@ function Run-Main {
 
     process {
         do {
-            Clear-Host
-            $MenuOptions
+            Clear-Host     #Each iteration through loop will clear the display
+            $MenuOptions   #and write the main menu to the screen.
+
             $MenuSelection = Read-Host "Make a selection"
             switch ($MenuSelection) {
                 '1' { $District = Get-District }
