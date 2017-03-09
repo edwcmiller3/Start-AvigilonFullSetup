@@ -152,6 +152,24 @@ function Disable-Firewall {
     }
 }
 
+function Register-CCleanerScheduledTask {
+    [CmdletBinding()]
+    param(
+    )
+
+    begin {
+        #TODO: Download CCleaner
+    }
+
+    process {
+        schtasks /CREATE /TN "Run CCleaner" /SC MONTHLY /M * /ST 15:08 /TR "C:\Program Files\CCleaner\CCleaner.exe /AUTO"
+    }
+
+    end {
+        pause
+    }
+}
+
 function Disable-WindowsUpdate {
     [CmdletBinding()]
     param(
@@ -216,7 +234,8 @@ function Run-Main {
                          "3. Install Avigilon Control Center client",
                          "4. Rename network adapters",
                          "5. Set camera adapter network configuration",#TODO
-                         "6. Configure & run Windows Update",
+                         "6. Create CCleaner scheduled task",
+                         "7. Configure & run Windows Update",
                          "Q. QUIT")
 
         $District = "NotListed"
