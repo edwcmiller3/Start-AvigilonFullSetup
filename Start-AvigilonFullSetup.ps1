@@ -61,6 +61,7 @@ function Remove-AvigilonStartupItem {
     .NOTES
         Currently only works for the ACC 5 client. Can be modified to work for recently released ACC 6.
     #>
+
     [CmdletBinding()]
     param(
     )
@@ -166,6 +167,7 @@ function Disable-Firewall {
     .EXAMPLE
         Called from Run-Main function. Can be run as standalone with Disable-Firewall.
     #>
+
     [CmdletBinding()]
     param(
     )
@@ -180,19 +182,43 @@ function Disable-Firewall {
 }
 
 function Register-CCleanerScheduledTask {
+    <#
+    .SYNOPSIS
+        Creates a scheduled task to run CCleaner.
+
+    .DESCRIPTION
+        Downloads CCleaner, runs the installer, then schedules an automatic run
+        at 3:00PM the first of every month.
+
+    .EXAMPLE
+        Called from Run-Main function. Can be run as standalone with Disable-WindowsUpdate.
+
+    .NOTES
+        Need to find a way to get the newest version of CCleaner.
+        Currently just downloads version 5.27.
+    #>
+
     [CmdletBinding()]
     param(
     )
 
     begin {
-        #TODO: Download CCleaner
+        New-Item -ItemType Directory -Path "C:\tmp"
+        
+        Invoke-WebRequest -Uri "http://download.piriform.com/ccsetup527.exe" 
+                          -UseBasicParsing 
+                          -OutFile "C:\tmp\ccleaner.exe"
+
+        & ("C:\tmp\ccleaner.exe")
     }
 
     process {
-        schtasks /CREATE /TN "Run CCleaner" /SC MONTHLY /M * /ST 15:08 /TR "C:\Program Files\CCleaner\CCleaner.exe /AUTO"
+        schtasks /CREATE /TN "Run CCleaner" /SC MONTHLY /M * /ST 15:00 /TR "C:\Program Files\CCleaner\CCleaner.exe /AUTO"
     }
 
     end {
+        Remove-Item -Recurse -Path "C:\tmp"
+
         pause
     }
 }
@@ -212,6 +238,7 @@ function Disable-WindowsUpdate {
     .NOTES
         Recommend manually updating the appliance or schedule updates for planned downtime.
     #>
+
     [CmdletBinding()]
     param(
     )
@@ -250,6 +277,7 @@ function Run-WindowsUpdate {
     .EXAMPLE
         Called from Run-Main function. Can be run as standalone with Run-WindowsUpdate.
     #>
+
     [CmdletBinding()]
     param(
     )
@@ -258,7 +286,9 @@ function Run-WindowsUpdate {
         #Need to restart the Windows Update service before running the update for Windows Update.
         #Create temporary folder and download the update installer to it.
         Stop-Service wuauserv
-        mkdir "C:\tmp"
+        
+        New-Item -ItemType Directory -Path "C:\tmp"
+
         Invoke-WebRequest -Uri "https://download.microsoft.com/download/B/7/C/B7CD3A70-1EA7-486A-9585-F6814663F1A9/Windows6.1-KB3138612-x64.msu" 
                           -UseBasicParsing 
                           -OutFile "C:\tmp\update.msu"
@@ -273,7 +303,7 @@ function Run-WindowsUpdate {
 
     end {
         #Cleanup temporary directory and files.
-        Remove-Item -Recurse "C:\tmp"
+        Remove-Item -Recurse -Path "C:\tmp"
 
         pause
     }
@@ -287,6 +317,7 @@ function Run-Main {
     .DESCRIPTION
         Clears the screen, displays menu for available configuration options, and accepts user input to run respective functions.
     #>
+
     [CmdletBinding()]
     param(
     )
@@ -297,13 +328,10 @@ function Run-Main {
                          "3. Install Avigilon Control Center client",
                          "4. Rename network adapters",
                          "5. Set camera adapter network configuration",#TODO
-<<<<<<< HEAD
                          "6. Create CCleaner scheduled task",
                          "7. Configure & run Windows Update",
-=======
                          "6. Disable automatic Windows updates",
                          "7. Run Windows Update",
->>>>>>> origin/master
                          "Q. QUIT")
 
         $District = "NotListed"
