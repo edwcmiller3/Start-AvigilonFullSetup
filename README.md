@@ -9,26 +9,17 @@ Show what the library does as concisely as possible, developers should be able t
 
 ## Motivation
 
-In my current job I set up a large quantity of Avigilon network video appliances according to the needs of our clients. This is incredibly tedious so I wrote a script to automate the process.
-
+In my current position I provision a large quantity of Avigilon network video appliances according to the needs of our clients. I started out with a checklist of everything that needed to be configured and set each appliance up manually. Automating the whole process has freed up considerable time to work on other projects and drastically reduced the time between receiving an order and getting it installed for a client.
 
 ## Installation
 
-Provide code examples and explanations of how to get the project.
-
-## API Reference
-
-Depending on the size of the project, if it is small and simple enough the reference docs can be added to the README. For medium size to larger projects it is important to at least provide a link to where the API reference docs live.
-
-## Tests
-
-Describe and show how to run the tests with code examples.
+Download a .zip of this project or clone it. The entire project is one PowerShell script broken into various functions. Requires at least PowerShell v4.
 
 ## Contributors
 
-Let people know how they can dive into the project, include important links to things like issue trackers, irc, twitter accounts if applicable.
+Feel free to submit any changes/improvements through git.
 
 ## License
 
-A short snippet describing the license (MIT, Apache, etc.)
+todo
 
