@@ -69,8 +69,8 @@ function Remove-AvigilonStartupItem {
     begin {
         try {
             #Need to edit now that Avigilon Control Center 6 has been released
-            Test-Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\Avigilon Control Center 5 Client.lnk" -ErrorAction Stop
-            $AvigilonStartupItem = "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\Avigilon Control Center 5 Client.lnk"
+            Test-Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*" -ErrorAction Stop
+            $AvigilonStartupItem = Get-Item "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*"
         } catch {
             Write-Error "No Avigilon startup item found"
         }
@@ -134,8 +134,28 @@ function Install-AvigilonSoftware {
 
 
 function Rename-NetworkAdapters {
+    <#
+    .SYNOPSIS
+        Renames the network adapters on Avigilon appliances.
+
+    .DESCRIPTION
+        Renames the Intel and Realtek (U1 and U2) network adapters on Avigilon appliances.
+
+    .EXAMPLE
+        Called from Run-Main function. Can be run as standalone with 
+        Rename-NetworkAdapters
+        Rename-NetworkAdapters -IntelAdapterName "CAMERAS" -RealtekAdapterName "LAN"
+    #>
+
     [CmdletBinding()]
     param(
+        [Parameter(Mandatory = $false,
+                   ValueFromPipelineByPropertyName = $true)]
+        [string]$IntelAdapterName = '',
+
+        [Parameter(Mandatory = $false,
+                   ValueFromPipelineByPropertyName = $true)]
+        [string]$RealtekAdapterName = ''
     )
 
     begin {
@@ -144,8 +164,19 @@ function Rename-NetworkAdapters {
     }
 
     process {
-        $IntelCameraAdapter.NetConnectionID = Read-Host "Enter the name for the Intel (camera) adapter"
-        $RealtekLANAdapter.NetConnectionID = Read-Host "Enter the name for the Realtek (LAN) adapter" 
+        #If the adapters were specified via their respective switches, use the names provided
+        #Else get the new names from user input
+        if ($IntelAdapterName) {
+            $IntelCameraAdapter.NetConnectionID = $IntelAdapterName
+        } else {
+            $IntelCameraAdapter.NetConnectionID = Read-Host "Enter the name for the Intel (camera) adapter"
+        }
+
+        if ($RealtekAdapterName) {
+            $RealtekLANAdapter.NetConnectionID = $RealtekAdapterName
+        } else {
+            $RealtekLANAdapter.NetConnectionID = Read-Host "Enter the name for the Realtek (LAN) adapter" 
+        }
     }
 
     end {
@@ -173,7 +204,7 @@ function Disable-Firewall {
     )
 
     process {
-        netsh advfirewall set allprofiles state off
+        Set-NetFirewallProfile -Profile Domain, Public, Private -Enabled False
     }
 
     end {
@@ -203,20 +234,21 @@ function Register-CCleanerScheduledTask {
     )
 
     begin {
+        #Create temporary directory for CCleaner download & run the installer
         New-Item -ItemType Directory -Path "C:\tmp"
         
-        Invoke-WebRequest -Uri "http://download.piriform.com/ccsetup527.exe" 
-                          -UseBasicParsing 
-                          -OutFile "C:\tmp\ccleaner.exe"
+        Invoke-WebRequest -Uri "http://download.piriform.com/ccsetup527.exe" -UseBasicParsing -OutFile "C:\tmp\ccleaner.exe"
 
         & ("C:\tmp\ccleaner.exe")
     }
 
     process {
+        #Creates scheduled task that runs CCleaner once a month at 3:00pm
         schtasks /CREATE /TN "Run CCleaner" /SC MONTHLY /M * /ST 15:00 /TR "C:\Program Files\CCleaner\CCleaner.exe /AUTO"
     }
 
     end {
+        #Clean up temporary download directory
         Remove-Item -Recurse -Path "C:\tmp"
 
         pause
