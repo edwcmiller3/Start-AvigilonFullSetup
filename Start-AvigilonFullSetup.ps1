@@ -1,10 +1,3 @@
-<#
-May not need this?
-function Get-District {
-    #TODO: List school districts, handle selection, pass to Install-AvigilonSoftware
-}
-#>
-
 function Install-CentraStage {
     <#
     .SYNOPSIS
@@ -24,11 +17,11 @@ function Install-CentraStage {
     
     begin {
         try {
-            Test-Path "Path\to\Centrastage\clients" -ErrorAction Stop
-            $CentraStagePath = "Path\to\Centrastage\clients" 
-            #$CentraStageInstallers = Get-ChildItem "Path\to\Centrastage\clients" -File
-            #$CentraStageList = $CentraStageInstallers | Sort-Object | ForEach-Object { $_.BaseName.Substring(11).Replace('+', ' ') }
-            $CentraStageDefaultInstaller = "Path\to\Centrastage\clients\default.exe"
+            if (Test-Path "Path\to\Centrastage\clients" -ErrorAction Stop) {
+                $CentraStagePath = "Path\to\Centrastage\clients" 
+                $CentraStageDefaultInstaller = "Path\to\Centrastage\clients\default.exe"
+            } else { 
+            }
         } catch {
             Write-Error "CentraStage clients folder could not be reached"
         }
@@ -67,17 +60,15 @@ function Remove-AvigilonStartupItem {
     )
 
     begin {
-        try {
-            #Need to edit now that Avigilon Control Center 6 has been released
-            Test-Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*" -ErrorAction Stop
-            $AvigilonStartupItem = Get-Item "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*"
-        } catch {
-            Write-Error "No Avigilon startup item found"
-        }
+
     }
 
     process {
-        Remove-Item $AvigilonStartupItem
+        if (Test-Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*") {
+            Remove-Item $AvigilonStartupItem
+        } else {
+            Write-Host "Avigilon Client not in Startup programs."
+        }
     }
 
     end {
@@ -183,6 +174,45 @@ function Rename-NetworkAdapters {
         $IntelCameraAdapter.Put() | Out-Null
         $RealtekLANAdapter.Put() | Out-Null
 
+        pause
+    }
+}
+
+function Set-CameraAdapterConfiguration {
+    <#
+    Stuff
+    #>
+
+    [CmdletBinding()]
+    param(
+    )
+
+    begin {
+        #Regular expression for checking validity of IP/subnet mask
+        $ValidIPRegex = "^(?:(?:0?0?\d|0?[1-9]\d|1\d\d|2[0-5][0-5]|2[0-4]\d)\.){3}(?:0?0?\d|0?[1-9]\d|1\d\d|2[0-5][0-5]|2[0-4]\d)$"
+
+        #Store network configuration for Intel adapter
+        $InterfaceIndex = (Get-WmiObject -Class Win32_NetworkAdapter | Where-Object { $_.Name -like "*Intel*" }).InterfaceIndex
+        $NetworkInterface = Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Where-Object { $_.InterfaceIndex -eq $InterfaceIndex }
+
+        #Accept user input for camera adapter network configuration as long as input is valid
+        do {
+            Write-Host "Enter all the following information in the format 'XXX.XXX.XXX.XXX'"
+            $CameraAdapterIP = Read-Host -Prompt "Enter the IP address"
+            $CameraAdapterSubnet = Read-Host -Prompt "Enter the subnet mask"
+            $CameraAdapterGateway = Read-Host -Prompt "Enter the default gateway"
+            $CameraAdapterDNS = Read-Host -Prompt "Enter the DNS"
+        } until ($CameraAdapterIP -and $CameraAdapterSubnet -and $CameraAdapterGateway -and $CameraAdapterDNS -match $ValidIPRegex)
+    }
+
+    process {
+        #Apply user configuration to the camera adapter
+        $NetworkInterface.EnableStatic($CameraAdapterIP, $CameraAdapterSubnet) | Out-Null
+        $NetworkInterface.SetGateways($CameraAdapterGateway) | Out-Null
+        $NetworkInterface.SetDNSServerSearchOrder(@($CameraAdapterDNS)) | Out-Null
+    }
+
+    end {
         pause
     }
 }
@@ -321,9 +351,7 @@ function Run-WindowsUpdate {
         
         New-Item -ItemType Directory -Path "C:\tmp"
 
-        Invoke-WebRequest -Uri "https://download.microsoft.com/download/B/7/C/B7CD3A70-1EA7-486A-9585-F6814663F1A9/Windows6.1-KB3138612-x64.msu" 
-                          -UseBasicParsing 
-                          -OutFile "C:\tmp\update.msu"
+        Invoke-WebRequest -Uri "https://download.microsoft.com/download/B/7/C/B7CD3A70-1EA7-486A-9585-F6814663F1A9/Windows6.1-KB3138612-x64.msu" -UseBasicParsing -OutFile "C:\tmp\update.msu"
     }
 
     process {
@@ -359,11 +387,10 @@ function Run-Main {
                          "2. Install CentraStage",
                          "3. Install Avigilon Control Center client",
                          "4. Rename network adapters",
-                         "5. Set camera adapter network configuration",#TODO
+                         "5. Set camera adapter network configuration",
                          "6. Create CCleaner scheduled task",
-                         "7. Configure & run Windows Update",
-                         "6. Disable automatic Windows updates",
-                         "7. Run Windows Update",
+                         "7. Disable automatic Windows updates",
+                         "8. Run Windows Update",
                          "Q. QUIT")
 
         $District = "NotListed"
@@ -380,9 +407,10 @@ function Run-Main {
                 '2' { Install-CentraStage }
                 '3' { Install-AvigilonSoftware -District $District }
                 '4' { Rename-NetworkAdapters }
-                #'5' { TODO: Configure network }
-                '6' { Disable-WindowsUpdate }
-                '7' { Run-WindowsUpdate }
+                '5' { Set-CameraAdapterConfiguration }
+                '6' { Register-CCleanerScheduledTask }
+                '7' { Disable-WindowsUpdate }
+                '8' { Run-WindowsUpdate }
                 'Q' { return }
                 default { "Invalid selection" }
             }
