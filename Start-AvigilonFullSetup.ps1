@@ -39,43 +39,6 @@ function Install-CentraStage {
     }
 }
 
-function Remove-AvigilonStartupItem {
-    <#
-    .SYNOPSIS
-        Remove Avigilon Control Center Client from startup.
-
-    .DESCRIPTION
-        Checks to see if the Avigilon Control Center Client is in the Windows startup programs.
-        If found, removes the application from startup.
-
-    .EXAMPLE
-        Called from the end{} of Install-AvigilonSoftware function. Can be run as standalone with Remove-AvigilonStartupItem.
-
-    .NOTES
-        Currently only works for the ACC 5 client. Can be modified to work for recently released ACC 6.
-    #>
-
-    [CmdletBinding()]
-    param(
-    )
-
-    begin {
-
-    }
-
-    process {
-        if (Test-Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*") {
-            Remove-Item $AvigilonStartupItem
-        } else {
-            Write-Host "Avigilon Client not in Startup programs."
-        }
-    }
-
-    end {
-        pause
-    }
-}
-
 function Install-AvigilonSoftware {
     <#
     .SYNOPSIS
@@ -119,7 +82,13 @@ function Install-AvigilonSoftware {
     }
 
     end {
-        Remove-AvigilonStartupItem
+        #If the installer adds the client software to Startup, remove it from Startup
+        if (Test-Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*") {
+            $AvigilonStartupItem = Get-ChildItem "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*"
+            Remove-Item $AvigilonStartupItem
+        }
+
+        pause
     }
 }
 
@@ -201,7 +170,7 @@ function Set-CameraAdapterConfiguration {
             $CameraAdapterIP = Read-Host -Prompt "Enter the IP address"
             $CameraAdapterSubnet = Read-Host -Prompt "Enter the subnet mask"
             $CameraAdapterGateway = Read-Host -Prompt "Enter the default gateway"
-            $CameraAdapterDNS = Read-Host -Prompt "Enter the DNS"
+            $CameraAdapterDNS = Read-Host -Prompt "Enter the DNS server"
         } until ($CameraAdapterIP -and $CameraAdapterSubnet -and $CameraAdapterGateway -and $CameraAdapterDNS -match $ValidIPRegex)
     }
 
