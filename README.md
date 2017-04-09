@@ -21,5 +21,5 @@ Feel free to submit any changes/improvements through git.
 
 ## License
 
-todo
+MIT
 
