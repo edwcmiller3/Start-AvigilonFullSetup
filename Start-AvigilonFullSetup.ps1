@@ -236,7 +236,7 @@ function Register-CCleanerScheduledTask {
         #Create temporary directory for CCleaner download & run the installer
         New-Item -ItemType Directory -Path "C:\tmp"
         
-        Invoke-WebRequest -Uri "http://download.piriform.com/ccsetup527.exe" -UseBasicParsing -OutFile "C:\tmp\ccleaner.exe"
+        Invoke-WebRequest -Uri "https://www.piriform.com/ccleaner/download/slim/downloadfile" -UseBasicParsing -OutFile "C:\tmp\ccleaner.exe"
 
         & ("C:\tmp\ccleaner.exe")
     }
