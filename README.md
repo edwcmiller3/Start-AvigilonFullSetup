@@ -13,7 +13,7 @@ In my current position I provision a large quantity of Avigilon network video ap
 
 ## Installation
 
-Download a .zip of this project or clone it. The entire project is one PowerShell script broken into various functions. Requires at least PowerShell v4.
+Download a .zip of this project or clone it. The entire project is one PowerShell script broken into various functions. Requires at least PowerShell 2.0.
 
 ## Contributors
 
