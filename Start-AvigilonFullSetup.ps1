@@ -71,18 +71,18 @@ function Install-AvigilonSoftware {
 
     process {
         if ($District -eq "NotListed") {
-            #Run the default installer if District not passed/NotListed selected
-            #Relies on default installer folder with name '[Default] X.X.X.X'
+            # Run the default installer if District not passed/NotListed selected
+            # Relies on default installer folder with name '[Default] X.X.X.X'
             $AvigilonInstallerPath = $AvigilonSoftwarePath | Sort-Object | Select-Object -First 1
             $ACCSInstaller = Get-ChildItem $AvigilonInstallerPath | Where-Object { $_.Name -like "*Server*" }
             & ($ACCSInstaller) | Out-Null
         } else {
-            #TODO: District based selection
+            # TODO: District based selection
         }
     }
 
     end {
-        #If the installer adds the client software to Startup, remove it from Startup
+        # If the installer adds the client software to Startup, remove it from Startup
         if (Test-Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*") {
             $AvigilonStartupItem = Get-ChildItem "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*Client*"
             Remove-Item $AvigilonStartupItem
@@ -124,8 +124,8 @@ function Rename-NetworkAdapters {
     }
 
     process {
-        #If the adapters were specified via their respective switches, use the names provided
-        #Else get the new names from user input
+        # If the adapters were specified via their respective switches, use the names provided
+        # Else get the new names from user input
         if ($IntelAdapterName) {
             $IntelCameraAdapter.NetConnectionID = $IntelAdapterName
         } else {
@@ -157,14 +157,14 @@ function Set-CameraAdapterConfiguration {
     )
 
     begin {
-        #Regular expression for checking validity of IP/subnet mask
+        # Regular expression for checking validity of IP/subnet mask
         $ValidIPRegex = "^(?:(?:0?0?\d|0?[1-9]\d|1\d\d|2[0-5][0-5]|2[0-4]\d)\.){3}(?:0?0?\d|0?[1-9]\d|1\d\d|2[0-5][0-5]|2[0-4]\d)$"
 
-        #Store network configuration for Intel adapter
+        # Store network configuration for Intel adapter
         $InterfaceIndex = (Get-WmiObject -Class Win32_NetworkAdapter | Where-Object { $_.Name -like "*Intel*" }).InterfaceIndex
         $NetworkInterface = Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Where-Object { $_.InterfaceIndex -eq $InterfaceIndex }
 
-        #Accept user input for camera adapter network configuration as long as input is valid
+        # Accept user input for camera adapter network configuration as long as input is valid
         do {
             Write-Host "Enter all the following information in the format 'XXX.XXX.XXX.XXX'"
             $CameraAdapterIP = Read-Host -Prompt "Enter the IP address"
@@ -175,7 +175,7 @@ function Set-CameraAdapterConfiguration {
     }
 
     process {
-        #Apply user configuration to the camera adapter
+        # Apply user configuration to the camera adapter
         $NetworkInterface.EnableStatic($CameraAdapterIP, $CameraAdapterSubnet) | Out-Null
         $NetworkInterface.SetGateways($CameraAdapterGateway) | Out-Null
         $NetworkInterface.SetDNSServerSearchOrder(@($CameraAdapterDNS)) | Out-Null
@@ -203,7 +203,8 @@ function Disable-Firewall {
     )
 
     process {
-        Set-NetFirewallProfile -Profile Domain, Public, Private -Enabled False
+        # For Windows 7 without PowerShell 3.0
+        netsh advfirewall set allprofiles state off
     }
 
     end {
@@ -233,21 +234,26 @@ function Register-CCleanerScheduledTask {
     )
 
     begin {
-        #Create temporary directory for CCleaner download & run the installer
-        New-Item -ItemType Directory -Path "C:\tmp"
+        # Create temporary directory for CCleaner download
+        $DownloadPath = New-Item -ItemType Directory -Path "C:\tmp"
+        $Destination = $DownloadPath.FullName + "\ccleaner.exe"
         
-        Invoke-WebRequest -Uri "https://www.piriform.com/ccleaner/download/slim/downloadfile" -UseBasicParsing -OutFile "C:\tmp\ccleaner.exe"
+        # PowerShell 2.0 version of Invoke-WebRequest
+        # Some appliances may not have latest version of PowerShell
+        $CCleanerURL = "http://download.piriform.com/ccsetup530.exe"
+        $Client = New-Object System.Net.WebClient
+        $Client.DownloadFile($CCleanerURL, $Destination)
 
         & ("C:\tmp\ccleaner.exe")
     }
 
     process {
-        #Creates scheduled task that runs CCleaner once a month at 3:00pm
+        # Creates scheduled task that runs CCleaner once a month at 3:00pm
         schtasks /CREATE /TN "Run CCleaner" /SC MONTHLY /M * /ST 15:00 /TR "C:\Program Files\CCleaner\CCleaner.exe /AUTO"
     }
 
     end {
-        #Clean up temporary download directory
+        # Clean up temporary download directory
         Remove-Item -Recurse -Path "C:\tmp"
 
         pause
@@ -314,8 +320,8 @@ function Run-WindowsUpdate {
     )
 
     begin {
-        #Need to restart the Windows Update service before running the update for Windows Update.
-        #Create temporary folder and download the update installer to it.
+        # Need to restart the Windows Update service before running the update for Windows Update.
+        # Create temporary folder and download the update installer to it.
         Stop-Service wuauserv
         
         New-Item -ItemType Directory -Path "C:\tmp"
@@ -324,14 +330,14 @@ function Run-WindowsUpdate {
     }
 
     process {
-        #Start Windows Update service, run the update, then check for any other updates.
+        # Start Windows Update service, run the update, then check for any other updates.
         Start-Service wuauserv
         & ("C:\tmp\update.msu")
         wuauclt.exe /ShowWUAutoScan
     }
 
     end {
-        #Cleanup temporary directory and files.
+        # Cleanup temporary directory and files.
         Remove-Item -Recurse -Path "C:\tmp"
 
         pause
@@ -367,8 +373,8 @@ function Run-Main {
 
     process {
         do {
-            Clear-Host     #Each iteration through loop will clear the display
-            $MenuOptions   #and write the main menu to the screen.
+            Clear-Host     # Each iteration through loop will clear the display
+            $MenuOptions   # and write the main menu to the screen.
 
             $MenuSelection = Read-Host "Make a selection"
             switch ($MenuSelection) {
