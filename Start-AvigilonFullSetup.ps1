@@ -149,7 +149,16 @@ function Rename-NetworkAdapters {
 
 function Set-CameraAdapterConfiguration {
     <#
-    Stuff
+    .SYNOPSIS
+        Prompts for and sets networking configuration on the camera NIC.
+
+    .DESCRIPTION
+        Assigns IP address, subnet mask, default gateway, and DNS server(s) to the
+        camera NIC (Intel network adapter on Avigilon appliances).
+
+    .EXAMPLE
+        Called from Run-Main function. Can be run as standalone with 
+        Set-CameraAdapterConfiguration
     #>
 
     [CmdletBinding()]
@@ -165,6 +174,7 @@ function Set-CameraAdapterConfiguration {
         $NetworkInterface = Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Where-Object { $_.InterfaceIndex -eq $InterfaceIndex }
 
         # Accept user input for camera adapter network configuration as long as input is valid
+        # TODO: Change DNS prompt for multiple DNS servers
         do {
             Write-Host "Enter all the following information in the format 'XXX.XXX.XXX.XXX'"
             $CameraAdapterIP = Read-Host -Prompt "Enter the IP address"
@@ -226,7 +236,6 @@ function Register-CCleanerScheduledTask {
 
     .NOTES
         Need to find a way to get the newest version of CCleaner.
-        Currently just downloads version 5.27.
     #>
 
     [CmdletBinding()]
