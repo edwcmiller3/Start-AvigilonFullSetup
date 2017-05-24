@@ -244,14 +244,14 @@ function Register-CCleanerScheduledTask {
 
     begin {
         # Create temporary directory for CCleaner download
-        $DownloadPath = New-Item -ItemType Directory -Path "C:\tmp"
-        $Destination = $DownloadPath.FullName + "\ccleaner.exe"
+        $CCDownloadPath = New-Item -ItemType Directory -Path "C:\tmp"
+        $CCDestination = $CCDownloadPath.FullName + "\ccleaner.exe"
         
         # PowerShell 2.0 version of Invoke-WebRequest
         # Some appliances may not have latest version of PowerShell
         $CCleanerURL = "http://download.piriform.com/ccsetup530.exe"
-        $Client = New-Object System.Net.WebClient
-        $Client.DownloadFile($CCleanerURL, $Destination)
+        $CCClient = New-Object System.Net.WebClient
+        $CCClient.DownloadFile($CCleanerURL, $CCDestination)
 
         & ("C:\tmp\ccleaner.exe")
     }
@@ -269,7 +269,7 @@ function Register-CCleanerScheduledTask {
     }
 }
 
-function Disable-WindowsUpdate {
+function Disable-WindowsAutoUpdate {
     <#
     .SYNOPSIS
         Turns off automatic updating.
@@ -279,7 +279,7 @@ function Disable-WindowsUpdate {
         Avoids appliance auto restarting to install updates which may interrupt camera recording.
 
     .EXAMPLE
-        Called from Run-Main function. Can be run as standalone with Disable-WindowsUpdate.
+        Called from Run-Main function. Can be run as standalone with Disable-WindowsAutoUpdate.
 
     .NOTES
         Recommend manually updating the appliance or schedule updates for planned downtime.
@@ -311,7 +311,7 @@ function Disable-WindowsUpdate {
     }
 }
 
-function Run-WindowsUpdate {
+function Start-WindowsUpdate {
     <#
     .SYNOPSIS
         Configures and runs Windows Update.
@@ -335,13 +335,20 @@ function Run-WindowsUpdate {
         
         New-Item -ItemType Directory -Path "C:\tmp"
 
-        Invoke-WebRequest -Uri "https://download.microsoft.com/download/B/7/C/B7CD3A70-1EA7-486A-9585-F6814663F1A9/Windows6.1-KB3138612-x64.msu" -UseBasicParsing -OutFile "C:\tmp\update.msu"
+        $WUDownloadPath = New-Item -ItemType Directory -Path "C:\tmp"
+        $WUDestination = $WUDownloadPath.FullName + "\UpdateWindowsUpdate.msu"
+        
+        # PowerShell 2.0 version of Invoke-WebRequest
+        # Some appliances may not have latest version of PowerShell
+        $WUUpdateURL = "https://download.microsoft.com/download/B/7/C/B7CD3A70-1EA7-486A-9585-F6814663F1A9/Windows6.1-KB3138612-x64.msu"
+        $WUClient = New-Object System.Net.WebClient
+        $WUClient.DownloadFile($WUUpdateURL, $WUDestination)
     }
 
     process {
         # Start Windows Update service, run the update, then check for any other updates.
         Start-Service wuauserv
-        & ("C:\tmp\update.msu")
+        & ("C:\tmp\UpdateWindowsUpdate.msu")
         wuauclt.exe /ShowWUAutoScan
     }
 
@@ -393,8 +400,8 @@ function Run-Main {
                 '4' { Rename-NetworkAdapters }
                 '5' { Set-CameraAdapterConfiguration }
                 '6' { Register-CCleanerScheduledTask }
-                '7' { Disable-WindowsUpdate }
-                '8' { Run-WindowsUpdate }
+                '7' { Disable-WindowsAutoUpdate }
+                '8' { Start-WindowsUpdate }
                 'Q' { return }
                 default { "Invalid selection" }
             }
